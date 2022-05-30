@@ -103,7 +103,7 @@ git init
 git add .
 git commit -m "first commit"
 git branch -M main
-git remote add origin https://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@github.com/yasint23/test-petclinic-microservices-with-db.git
+git remote add origin https://`token`@github.com/yasint23/test-petclinic-microservices-with-db.git
 git push origin main
 ```
 * Prepare base branches namely `main`,  `dev`,  `release` for DevOps cycle.
@@ -970,7 +970,7 @@ mkdir jenkins
 ```
 * Create a Jenkins job with the name of `petclinic-ci-job`:  (developer lar jenkins uzerinde unit testlerini yapiyorlar bu adimda)
   * Select `Freestyle project` and click `OK`
-  * Select github project and write the url to your repository's page into `Project url` (https://github.com/[your-github-account]/petclinic-microservices)
+  * Select github project and write the url to your repository's page into `Project url` (https://github.com/yasint23/test-petclinic-microservices-with-db)
   * Under the `Source Code Management` select `Git` 
   * Write the url of your repository into the `Repository URL` (https://github.com/[your-github-account]/petclinic-microservices.git)
   * Add `*/dev`, `*/feature**` and `*/bugfix**` branches to `Branches to build`
@@ -987,13 +987,21 @@ mkdir jenkins
   
   ######
   * Bu komutun aciklamasi: 
-  - Maven calisinca home directorysinde /.m2 local repo olsuturur ve butun dependencyleri buraya koyar, daha sonra tekrar mvn calistirinca ayni dependencyleri buradan alir tekrar yuklemez. 
-  - Jenkins uzerinde mvn calistirmak icin dockerhub dan maven-image(maven:3.6-openjdk-11) kullaniyoruz. Ancak pomfile gormesi gerekiyor docker run komutunda, bu yuzden volume(-v) bagliyoruz, bu volumde hercalsitiginda olusan gereksiz dosyalari tutmasin diye --rm yaziyoruz.
-  - `pwd`:/app -w /app (Bulundugum klasordeki dosyalari /app icerisine koyduk ancak calismasi icin -w /app 'workspace deki /app pathini tanimliyoruz)
-  - $HOME/.m2:/root/.m2 -v (Herdefasinda konteynir icerisinde .m2 klasoru olusturmasin diye bizim home directorymizdeki .m2 klasorunu konteynir icerisinde /root/.m2 volume ile root altindaki .m2 klasorune bagliyoruz. "root" konteynir da user ve onun home direct ise .m2 folder oluyor)
-  - Sonuc olarak bu komut sayesinde jenkins server'a maven yuklemeden konteynir $HOME/.m2 dan gerekli dosya dependencyleri alarak calisacak ve her seferinde unit testleri yapmasi.
-  -"$HOME/.m2" jenkins serverde "var/lib/jenkins/worksopace/petclinic-ci-job" oluyor.
-  ######
+  - Maven calisinca home directorysinde root altinda `/.m2` local repo olusturur ve butun dependencyleri buraya koyar, daha sonra tekrar mvn calistirinca ayni dependencyleri buradan alir tekrar yuklemez. 
+  - $HOME/.m2:/root/.m2 -v (Maven calistiginda root user altinda .m2 klasorunu herdefasinda klasoru olusturmasin diye bizim home directorymizdeki .m2 klasorunu, konteynir icerisindeki /root/.m2 volume ile root altindaki /.m2 klasorune bagliyoruz. 
+  - Jenkins uzerinde mvn calistirmak icin dockerhub dan maven-image(maven:3.6-openjdk-11) kullaniyoruz. Ancak pom file gormesi gerekiyor docker run komutunda, bu yuzden volume(-v) bagliyoruz, bu volumde her calistiginda olusan gereksiz dosyalari tutmasin diye --rm yaziyoruz.
+  - `pwd`:/app -w /app (Bulundugum klasordeki dosyalari /app icerisine koyduk ancak calismasi icin -w /app `workspace`(jenkins home directory) deki /app pathini tanimliyoruz)
+  
+  - Sonuc olarak bu komut sayesinde jenkins server'a maven yuklemeden konteynir $HOME/.m2 dan gerekli dosya dependencyleri alarak calisacak ve her seferinde unit testleri yapabilecegiz. 
+
+  Ek Bilgiler:
+  -"$HOME/.m2" jenkins serverde "var/lib/jenkins/worksopace/petclinic-ci-job" oluyor. 
+  $ cd /var/lib/jenkins
+  $ sudo su - jenkins    (Jenkins root girmis olduk, ls -a yazarsak `workspace` `/.m2` klasorlerini gorecegiz)
+  - workspace icerisinde her calistirdigimiz job file'lar olusur `petclinic-ci-job` diye bir file olusmus ve yukaridaki komut sayesinde
+  projenin butun file lari buraya kopyalanmis oldu)
+  $ sudo usermod -s /bin/bash jenkins (Jenkins kullanicisina shell ekleme, burda jenkins server otomotize ediyoruz)
+#####
   
 * Jenkins `CI Job` should be triggered to run on each commit of `feature**` and `bugfix**` branches and on each `PR` merge to `dev` branch.
 
