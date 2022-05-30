@@ -1013,7 +1013,7 @@ docker run --rm -v $HOME/.m2:/root/.m2 -v `pwd`:/app -w /app maven:3.8-openjdk-1
 ```
 * Create a webhook for Jenkins CI Job; 
 
-  + Go to the project repository page and click on `Settings`.
+  + Go to the Github project repository page and click on `Settings`.
 
   + Click on the `Webhooks` on the left hand menu, and then click on `Add webhook`.
 
@@ -1024,6 +1024,7 @@ docker run --rm -v $HOME/.m2:/root/.m2 -v `pwd`:/app -w /app maven:3.8-openjdk-1
   ```
 
 * Commit the change, then push the Jenkinsfile to the remote repo.
+# Asagidaki islemleri yaptiktan sonra `petclinic-ci-job` jenkins pipeline de trigger olacak, cunku webhook yaptik, job da `*/Feature**` branch belirttik, her degisklik de github job'u trigger edecek. 
 
 ``` bash
 git add .
@@ -1033,10 +1034,10 @@ git checkout dev
 git merge feature/msp-13
 git push origin dev
 ```
-#####
-"petclinic-nightly" (Geceleri yapilacak functional testler icin) section a geldik. Onceki "petclinic-ci-job" da unit testleri yaptik.
- Burada gercek hayatta kubernetes ile yapilir ancak biz egitim amacli docker swarm ve ansible kullanacagiz.
-Bunun icin; 
+# "petclinic-nightly" (Geceleri yapilacak functional testler icin) section a geldik. Onceki "petclinic-ci-job" da unit testleri yaptik.
+# Burada gercek hayatta kubernetes ile yapilabiliyor ancak biz docker swarm ve ansible kullanacagiz.
+# Neden burada k8s kullanmadik; Maliyeti dusurmek, kucuk bir proje k8s kurulum asamalari ile ugrasmamak, ansible kullanmak icin vs.
+# Bunun icin; 
 - CFN ile ile 5 adet ec2-instance ayaga kaldiracagiz tabi burda keypair otomotize etmemiz gerekiyor, 
 - imageleri AWS-ECR dan docker registry den alacagiz
 - Ansible ile instance lari yonetecegiz. Bundan soraki asamalar bunun icin.
@@ -1045,9 +1046,10 @@ Bunun icin;
 ## MSP 14 - Create Docker Registry for Dev Manually
 
 * Create a Jenkins Freestyle Job and name it as `create-ecr-docker-registry-for-dev` to create Docker Registry for `dev` on AWS ECR manually.
-- Copy the command to the "Execute shell"
-- petclininc folder da "aws" '/usr/path/bin' altinda o nedenle calismasi icin path vermemiz gerekiyor.
-- Jenkins serverde role verdigimiz icin aws config yapmamiz gerekmiyor.
+
+# Copy the command to the "Execute shell"
+# petclininc folder da "aws" '/usr/path/bin' altinda o nedenle calismasi icin path vermemiz gerekiyor.
+# Jenkins server'a role verdigimiz icin aws config yapmamiz gerekmiyor.
 
 ``` bash
 PATH="$PATH:/usr/local/bin"
