@@ -1843,7 +1843,8 @@ ansible-playbook -i ./ansible/inventory/dev_stack_dynamic_inventory_aws_ec2.yaml
 # tagging script will create env variable like $admin-server-tag available inside the jenkins server and with `envsubst` command these env variable will be inside of grand-master server as well. 
 # docker-compose-swarm-dev.yml will change to docker-compose-swarm-dev-tagged.yml (we use this in grand master deploy file in playbook) with variables actual values.
 
-- Create Selenium dummy test with name of `dummy_selenium_test_headless.py` with following content to check the setup for the Selenium jobs and save it under `selenium-jobs` folder.
+- Create Selenium dummy test with name of `dummy_selenium_test_headless.py` with following content to check the setup for the Selenium jobs and save it under `selenium-jobs` folder under the project root.
+# Before running our pipeline we want to check with dummy python file test if it is running.
 
 ```python
 from selenium import webdriver
@@ -1895,7 +1896,8 @@ git commit -m 'added scripts for running dummy selenium job'
 git push --set-upstream origin feature/msp-17
 ```
 
-- Create a Jenkins job with name of `test-running-dummy-selenium-job` to check the setup for selenium tests by running dummy selenium job on `feature/msp-17` branch.
+- Create a Jenkins freestyle job with name of `test-running-dummy-selenium-job` to check the setup for selenium tests by running dummy selenium job on `feature/msp-17` branch.
+- Source code management - github url - branch: feature/msp-17 - execute shell - copy the script above.
 
 - Create Ansible playbook for running all selenium jobs under `selenium-jobs` folder and save it as `pb_run_selenium_jobs.yaml` under `ansible/playbooks` folder.
 
