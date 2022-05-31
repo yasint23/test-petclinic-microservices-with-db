@@ -1048,8 +1048,8 @@ git push origin dev
 * Create a Jenkins Freestyle Job and name it as `create-ecr-docker-registry-for-dev` to create Docker Registry for `dev` on AWS ECR manually.
 
 # Copy the command to the "Execute shell"
-# petclininc folder da "aws" '/usr/path/bin' altinda o nedenle calismasi icin path vermemiz gerekiyor.
-# Jenkins server'a role verdigimiz icin aws config yapmamiz gerekmiyor.
+# petclininc folder da "aws" command '/usr/path/bin' altinda o nedenle calismasi icin path belirtmemiz gerekiyor.
+# Jenkins server'a role verdigimiz icin aws config yapmamiz gerekmiyor. Jenkins server ile ECR kurduk manual yapabilirdik.
 
 ``` bash
 PATH="$PATH:/usr/local/bin"
@@ -1109,7 +1109,7 @@ git checkout feature/msp-16
 ```
 
 - Prepare a Cloudformation template for Docker Swarm Infrastructure consisting of 3 Managers, 2 Worker Instances and save it as `dev-docker-swarm-infrastructure-cfn-template.yml` under `infrastructure` folder.
-## Bu cfn dosyasinda docker image olan 5 ec2 var ve bunlara ansible tarafindan yonetmek icin "tag" ler verildi. Managerlar dan biri grand-master, ileride ansible da tagler bu isim ile verilcek.
+## Bu cfn dosyasinda docker image olan 5 ec2 var ve bunlara ansible tarafindan yonetmek icin "tag" ler verildi. Managerlar dan biri grand-master, ileride ansible da dynamic inventory bu tagler ile kullanilacak. Bunu proje klasorunden aldik, daha once hazirlanmis.
 
 - Grant permissions to Docker Machines within Cloudformation template to create ECR Registry, push or pull Docker images to/from ECR Repo.
 
@@ -1143,6 +1143,7 @@ aws --version
   * Click `Save`
 
 - After running the job above, replace the script with the one below in order to test creating key pair for `ansible`.
+# Jenkins de `Project test-creating-qa-automation-infrastructure` gelip `configure` tiklayip `Execute shell'i` update ediyoruz. 
 
 ```bash
 PATH="$PATH:/usr/local/bin"
@@ -1152,26 +1153,29 @@ aws ec2 create-key-pair --region ${AWS_REGION} --key-name ${CFN_KEYPAIR} --query
 chmod 400 ${CFN_KEYPAIR}
 ```
 
-- After running the job above, replace the script with the one below in order to test creating Docker Swarm infrastructure with AWS Cloudformation.
+- After running the job above, replace the script with the one below in order to test creating Docker Swarm infrastructure with AWS Cloudformation. 
+# Cloudformation jenkins server uzerinden olusturuyoruz, Console da manual olarak stack olusturmadan.
 
 ```bash
 PATH="$PATH:/usr/local/bin"
 APP_NAME="Petclinic"
 APP_STACK_NAME="yasin-test-$APP_NAME-App-${BUILD_NUMBER}"
-CFN_KEYPAIR="yasin-test-ansible-test-dev.key"
+CFN_KEYPAIR="yasin-ansible-test-dev.key"
 CFN_TEMPLATE="./infrastructure/dev-docker-swarm-infrastructure-cfn-template.yml"
 AWS_REGION="us-east-1"
 aws cloudformation create-stack --region ${AWS_REGION} --stack-name ${APP_STACK_NAME} --capabilities CAPABILITY_IAM --template-body file://${CFN_TEMPLATE} --parameters ParameterKey=KeyPairName,ParameterValue=${CFN_KEYPAIR}
 ```
 
-- After running the job above, replace the script with the one below in order to test SSH connection with one of the docker instance.
+- After running the job above, replace the script with the one below in order to test SSH connection with one of the docker instance.(Get private Ip of one of the instance)
 
 ```bash
-CFN_KEYPAIR="yasin-test-ansible-test-dev.key"
+CFN_KEYPAIR="yasin-ansible-test-dev.key"
 ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i ${WORKSPACE}/${CFN_KEYPAIR} ec2-user@172.31.81.222  hostname
 ```
+# var/lib/jenkins/.ssh klasoru altinda known_hosts file var, bu dosya butun ec2 larin bilgilerini icersinde tutuyor. Cok lu ec2 ortamlarinda her gece test icin kosan ec2 larin bilgilerini burda degilde /dev/null da tutsun diye `UserKnownHostsFile=/dev/null` yazdik.
 
 - Prepare static inventory file with name of `hosts.ini` for Ansible under `ansible/inventory` folder using Docker machines private IP addresses.
+# test-petclinic-microservices-with-db/ansible/inventory folder olsuturuyoruz icersinde `hosts.ini` file olsuturacagiz. bunu terminal den; `mkdir -p ansible/inventory` ile yapabiliriz.
 
 ```ini
 172.31.91.243   ansible_user=ec2-user  
