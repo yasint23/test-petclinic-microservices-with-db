@@ -1549,6 +1549,11 @@ git push origin dev
 ## MSP 17 - Prepare a QA Automation Pipeline for Nightly Builds
 
 ![Functional Test Diagram](./functional_test.png)
+# For the functional tests; 
+- We need running application and for this we need package and install. Maven for package and we need docker images.
+- These images will be store in `ECR` and we will pull/push with using `tagging` 
+- Create Infrastructure; Docker Swarm (5 EC2) and Configure/manage by Ansible
+- Functional test will be done on `Selenium`
 
 - Create `feature/msp-17` branch from `dev`.
 
@@ -1563,7 +1568,7 @@ git checkout feature/msp-17
 ```bash
 docker run --rm -v $HOME/.m2:/root/.m2 -v $WORKSPACE:/app -w /app maven:3.8-openjdk-11 mvn clean package
 ```
-* Bu kodun  aciklamasi; Attaching local .m2 repository to the image repository and app will run on the workspace (repo of jenkins) server. 
+# Bu kodun  aciklamasi; Attaching local .m2 repository to the image repository and app will run on the workspace (repo of jenkins) server. 
 
 - Prepare a script to create ECR tags for the dev docker images and save it as `prepare-tags-ecr-for-dev-docker-images.sh` and save it under `jenkins` folder.
 
@@ -1638,7 +1643,7 @@ git push --set-upstream origin feature/msp-17
       * Write below script into the `Command`
         ```bash
         PATH="$PATH:/usr/local/bin"
-        APP_REPO_NAME="clarusway-repo/petclinic-app-dev" # Write your own repo name
+        APP_REPO_NAME="yasin-repo/petclinic-app-dev" # Write your own repo name
         AWS_REGION="us-east-1" #Update this line if you work on another region
         ECR_REGISTRY="046402772087.dkr.ecr.us-east-1.amazonaws.com" # Replace this line with your ECR name
         aws ecr create-repository \
@@ -1832,9 +1837,11 @@ networks:
 ```bash
 PATH="$PATH:/usr/local/bin"
 APP_NAME="petclinic"
-envsubst < docker-compose-swarm-dev.yml > docker-compose-swarm-dev-tagged.yml
+envsubst < docker-compose-swarm-dev.yml > docker-compose-swarm-dev-tagged.yml 
 ansible-playbook -i ./ansible/inventory/dev_stack_dynamic_inventory_aws_ec2.yaml -b --extra-vars "workspace=${WORKSPACE} app_name=${APP_NAME} aws_region=${AWS_REGION} ecr_registry=${ECR_REGISTRY}" ./ansible/playbooks/pb_deploy_app_on_docker_swarm.yaml
 ```
+# tagging script will create env variable like $admin-server-tag available inside the jenkins server and with `envsubst` command these env variable will be inside of grand-master server as well. 
+# docker-compose-swarm-dev.yml will change to docker-compose-swarm-dev-tagged.yml (we use this in grand master deploy file in playbook) with variables actual values.
 
 - Create Selenium dummy test with name of `dummy_selenium_test_headless.py` with following content to check the setup for the Selenium jobs and save it under `selenium-jobs` folder.
 
