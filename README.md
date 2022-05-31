@@ -1194,11 +1194,11 @@ git push
 ```
 
 - Configure `test-creating-qa-automation-infrastructure` job and replace the existing script with the one below in order to test ansible by pinging static hosts.
-## Test yapiyoruz ansible 5 instance ile connection kurabiliyor mu, "ping" komutu karsiligi "pong" donmesi gerek her biri icin.
+## Test yapiyoruz 5 ansible instance ile connection kurabiliyor mu, "ping" komutu karsiligi "pong" donmesi gerek her biri icin. Asagidaki komutu jenkins de cofiguration dan exec shell kopyalayip run yaptikdan sonra `console output` da 5 adet ping and pong gormemiz gerekiyor ki connectiuon saglikli oldugunu bilelim.
 
 ```bash
 PATH="$PATH:/usr/local/bin"
-CFN_KEYPAIR="yasin-test-ansible-test-dev.key"
+CFN_KEYPAIR="yasin-ansible-test-dev.key"
 export ANSIBLE_INVENTORY="${WORKSPACE}/ansible/inventory/hosts.ini"
 export ANSIBLE_PRIVATE_KEY_FILE="${WORKSPACE}/${CFN_KEYPAIR}"
 export ANSIBLE_HOST_KEY_CHECKING=False
