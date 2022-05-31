@@ -1207,8 +1207,9 @@ ansible all -m ping
 
 - Prepare dynamic inventory file with name of `dev_stack_dynamic_inventory_aws_ec2.yaml` for Ansible under `ansible/inventory` folder using Docker machines private IP addresses.
 
-## Dort tane yaml file hazirliyoruz, aslinda 1. yml file yeterli diger 3'u neyi nasil yaptigimizi gostermek icin. 
-# Ansible sayfasindan aws plugin yazinca content cikiyor, alip burada update ediyoruz. Resimde yaml dosyasindaki tagler sutun olarak gorunuyor. 
+# Dort tane yaml file hazirliyoruz, aslinda 1. yml file yeterli (best practice) diger 3'u neyi nasil yaptigimizi gostermek icin. 
+# Ansible sayfasindan aws plugin yazinca content cikiyor, alip burada update ediyoruz. Resimde yaml dosyasindaki tagler sutun olarak gorunuyor. (https://docs.ansible.com/ansible/latest/collections/amazon/aws/aws_ec2_inventory.html)
+
 ![Ansible Tags Diagram](./ansible_tags.png)
 
 ```yaml
@@ -1296,11 +1297,11 @@ git push
 
 ```bash
 APP_NAME="Petclinic"
-CFN_KEYPAIR="yasin-test-ansible-test-dev.key"
+CFN_KEYPAIR="yasin-ansible-test-dev.key"
 PATH="$PATH:/usr/local/bin"
 export ANSIBLE_PRIVATE_KEY_FILE="${WORKSPACE}/${CFN_KEYPAIR}"
 export ANSIBLE_HOST_KEY_CHECKING=False
-export APP_STACK_NAME="Call-$APP_NAME-App-${BUILD_NUMBER}" # Degistir "yasin-test-Petclinic-App-6" -cloudformation dan alabiliriz.  
+export APP_STACK_NAME="yasin-test-$APP_NAME-App-${BUILD_NUMBER}" # Jenkins shell de bunu "yasin-test-$APP_NAME-App-6" seklinde degistir -cloudformation dan version number aliyoruz.  
 # Dev Stack
 sed -i "s/APP_STACK_NAME/$APP_STACK_NAME/" ./ansible/inventory/dev_stack_dynamic_inventory_aws_ec2.yaml
 cat ./ansible/inventory/dev_stack_dynamic_inventory_aws_ec2.yaml
@@ -1318,18 +1319,18 @@ sed -i "s/APP_STACK_NAME/$APP_STACK_NAME/" ./ansible/inventory/dev_stack_swarm_w
 cat ./ansible/inventory/dev_stack_swarm_workers_aws_ec2.yaml
 ansible-inventory -v -i ./ansible/inventory/dev_stack_swarm_workers_aws_ec2.yaml --graph
 ```
-
+# sed -i komutu; substitution komutu, bir seyin yerine digerini yaz. -i ile bu degisiklik kalici oluyor. 
 - After running the job above, replace the script with the one below in order to test all instances within dev dynamic inventory by pinging static hosts.
-## Herhangi bir degisiklik yapmiyoruz. Bu defa dynamic inventory ile ping atiyoruz.
+# Bu defa dynamic inventory ile ping atiyoruz. Eskisini silip asagidakini kopyaliyoruz.
 
 ```bash
 # Test dev dynamic inventory by pinging
 APP_NAME="Petclinic"
-CFN_KEYPAIR="call-ansible-test-dev.key"
+CFN_KEYPAIR="yasin-ansible-test-dev.key"
 PATH="$PATH:/usr/local/bin"
 export ANSIBLE_PRIVATE_KEY_FILE="${WORKSPACE}/${CFN_KEYPAIR}"
 export ANSIBLE_HOST_KEY_CHECKING=False
-export APP_STACK_NAME="Call-$APP_NAME-App-${BUILD_NUMBER}"
+export APP_STACK_NAME="yasin-test-$APP_NAME-App-${BUILD_NUMBER}" # Build number cloudformation bakarak manual yaz.
 sed -i "s/APP_STACK_NAME/$APP_STACK_NAME/" ./ansible/inventory/dev_stack_dynamic_inventory_aws_ec2.yaml
 ansible -i ./ansible/inventory/dev_stack_dynamic_inventory_aws_ec2.yaml all -m ping
 ```
@@ -1459,7 +1460,7 @@ git push
 
 ```bash
 APP_NAME="Petclinic"
-CFN_KEYPAIR="yasin-test-ansible-test-dev.key"
+CFN_KEYPAIR="yasin-ansible-test-dev.key"
 PATH="$PATH:/usr/local/bin"
 export ANSIBLE_PRIVATE_KEY_FILE="${WORKSPACE}/${CFN_KEYPAIR}"
 export ANSIBLE_HOST_KEY_CHECKING=False
