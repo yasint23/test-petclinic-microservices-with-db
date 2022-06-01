@@ -2220,9 +2220,9 @@ pipeline {
     environment {
         PATH=sh(script:"echo $PATH:/usr/local/bin", returnStdout:true).trim()
         APP_NAME="petclinic"
-        APP_STACK_NAME="Matt-$APP_NAME-App-QA-${BUILD_NUMBER}"
+        APP_STACK_NAME="yasin-$APP_NAME-App-QA-${BUILD_NUMBER}"
         AWS_REGION="us-east-1"
-        CFN_KEYPAIR="matt-${APP_NAME}-qa.key"
+        CFN_KEYPAIR="yasin-${APP_NAME}-qa.key"
         CFN_TEMPLATE="./infrastructure/qa-docker-swarm-infrastructure-cfn-template.yml"
         ANSIBLE_PRIVATE_KEY_FILE="${JENKINS_HOME}/.ssh/${CFN_KEYPAIR}"
         ANSIBLE_HOST_KEY_CHECKING="False"
@@ -2311,7 +2311,7 @@ git checkout feature/msp-19
 
 ```bash
 PATH="$PATH:/usr/local/bin"
-APP_REPO_NAME="clarusway-repo/petclinic-app-qa"
+APP_REPO_NAME="yasin-repo/petclinic-app-qa"
 AWS_REGION="us-east-1"
 
 aws ecr create-repository \
