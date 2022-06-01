@@ -2110,6 +2110,10 @@ pipeline {
 
 - Create a Jenkins pipeline with name of `petclinic-nightly` with following script to run QA automation tests and configure a `cron job` to trigger the pipeline every night at midnight (`0 0 * * *`) on `dev` branch. Petclinic nightly build pipeline should be built on temporary QA automation environment.
 
+# GitHub Project URL (https://github.com/yasint23/test-petclinic-microservices-with-db) - Build periodically (0 0 * * *)
+# pipeline script from SCM - SCM:Git - Repository URl (https://github.com/yasint23/test-petclinic-microservices-with-db.git)
+# Branch:*/dev - Script Path: ./jenkins/jenkinsfile-petclinic-nightly
+
 - Commit the change, then push the script to the remote repo.
 
 ```bash
