@@ -24,7 +24,7 @@ vet_link = driver.find_element_by_link_text("VETERINARIANS")
 vet_link.click()
 
 # Verify that table loaded
-sleep(10)
+sleep(5)
 verify_table = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, "table")))
 
 print("Table loaded")
