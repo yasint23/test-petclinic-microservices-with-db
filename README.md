@@ -2787,7 +2787,11 @@ git checkout feature/msp-22
 
 * Explain [Rancher Container Management Tool](https://rancher.com/docs/rancher/v2.x/en/overview/architecture/).
 
-* Create an IAM Policy with name of `call-rke-controlplane-policy.json` and also save it under `infrastructure` for `Control Plane` node to enable Rancher to create or remove EC2 resources.
+# Rancher da iki onemli nokata var; Secur baglanti ve High Availability. Rancher Server icin ec2 kuracagiz ve onune ALB ile high availibility saglayacagiz. Rancher da sec baglanti icin hhttps ile baglanabilecegiz bunun icin AWS TLS certificate ve Route-53 den domain ihtiyacimiz olacak. 
+# Rancher'in AWS servislerini kullanmasi icin IAM role tanimlayacagiz. Jenkins'e Ranger Kubernetes Engine (RKE CLI) tool indirerek Jenkins de bu tool ile once bir cluster kuracagiz sonra cluster'a Helm Chart yardimi ile Rancher uuygulamamiz install edecegiz. 
+# Staging environment jenkins job icerisinde, Rancher yardimi ile 3 node'dan olusan kubernetes cluster icersinde deploy edecegiz. Ayni sekilde production environmentda da yapacagiz.
+
+* Create an IAM Policy with name of `yasin-rke-controlplane-policy.json` and also save it under `infrastructure` for `Control Plane` node to enable Rancher to create or remove EC2 resources.
 
 ``` json
 {
@@ -2859,7 +2863,7 @@ git checkout feature/msp-22
 }
 ```
 
-* Create an IAM Policy with name of `call-rke-etcd-worker-policy.json` and also save it under `infrastructure` for `etcd` or `worker` nodes to enable Rancher to get information from EC2 resources.
+* Create an IAM Policy with name of `yasin-rke-etcd-worker-policy.json` and also save it under `infrastructure` for `etcd` or `worker` nodes to enable Rancher to get information from EC2 resources.
 
 ```json
 {
@@ -2900,7 +2904,8 @@ git checkout feature/msp-22
   
     * Allow SSH on port 22 to any node IP that installs Docker (ex. Jenkins Server).
 
-  * Outbound rules; (aslinda burada all traffic deseydik asagidaki poirtlari acmaya gerek kalmazdi ancak rancher dokumantasyonda yazdigi icin bu sekilde yapiyoruz ancak ileride kurulum asamasinda buraya gelip all traffic diyecegiz!!! Simdiden all traffic diyebiliriz)
+  * Outbound rules; 
+  # Aslinda burada all traffic deseydik asagidaki poirtlari acmaya gerek kalmazdi ancak rancher dokumantasyonda yazdigi icin bu sekilde yapiyoruz ancak ileride kurulum asamasinda buraya gelip all traffic diyecegiz!!! Simdiden all traffic diyebiliriz
 
     * Allow SSH protocol (TCP on port 22) to any node IP from a node created using Node Driver.
 
@@ -2909,21 +2914,28 @@ git checkout feature/msp-22
     * Allow HTTPS protocol (TCP on port 443) to `35.160.43.145/32`, `35.167.242.46/32`, `52.33.59.17/32` for catalogs of `git.rancher.io`.
 
     * Allow TCP on port 2376 to any node IP from a node created using Node Driver for Docker machine TLS port.
-    # Create sec grup diyoruz. Sonra tekrar bu sec grubunun hem inbound hemde outbound kismina kendisini(secgrp id) ekliyoruz, alttaki satirda yazan communication islemini saglamak icin.
+
+# Create sec grup diyoruz. Sonra tekrar bu sec grubunun hem inbound hemde outbound kismina kendisini(secgrp id) ekliyoruz, Cluster icerisinde kendi componentlerin (`controlplane`, `etcd`, `worker`) birbirleri ile iletisim kurabilmesi icin.
+
   * Allow all protocol on all port from `rke-cluster-sg` for self communication between Rancher `controlplane`, `etcd`, `worker` nodes.
+# Edit inbound - Copy own sec grp id, paste to direction you will see rke-cluster-sg chose and save it. Do same thing to outbound rule
 
 * Log into Jenkins Server and create `rancher.pem` key-pair for Rancher Server using AWS CLI.
 # (Cluster'a jenkins server ile baglanacagimiz icin bu islemi yapiyoruz aksi halde gerek yoktu)
   
 ```bash
 aws ec2 create-key-pair --region us-east-1 --key-name rancher.pem --query KeyMaterial --output text > ~/.ssh/rancher.pem
+
 chmod 400 ~/.ssh/rancher.pem
+# Bu olmayabiliyor, terminalde .ssh folder icersine giderek orada chmod 400 rancher.pem yapmak daha kesin olur.
 ```
 
-* Launch an EC2 instance using `Ubuntu Server 20.04 LTS (HVM) (64-bit x86)` with `t2.medium` type, 16 GB root volume,  `rke-cluster-sg` security group, `rke-role` IAM Role, `Name:Rancher-Cluster-Instance` tag and `rancher.pem` key-pair. Take note of `subnet id` of EC2. 
+* Launch an EC2 instance using `Ubuntu Server 20.04 LTS (HVM) (64-bit x86)` with `t3a.medium` type, 16 GB root volume,  `rke-cluster-sg` security group, `rke-role` IAM Role, `Name:Rancher-Cluster-Instance` tag and `rancher.pem` key-pair. Take note of `subnet id` of EC2. 
 
 * Attach a tag to the `nodes (intances)`, `subnets` and `security group` for Rancher with `Key = kubernetes.io/cluster/Rancher` and `Value = owned`. 
-# Rancher Cluster Instance-Cluster security gruba ve instance -->'Networking' --> subnet yukaridaki tag ekliyoruz)
+# Rancher Cluster Instance- Ad tag - `Key = kubernetes.io/cluster/Rancher` and `Value = owned` save
+# Sec Group - rke-cluster-sg - Ad tag - `Key = kubernetes.io/cluster/Rancher` and `Value = owned` save
+# Rancher Cluster Instance - Networking - Click Subnet ID - Ad tag - `Key = kubernetes.io/cluster/Rancher` and `Value = owned` save
   
 * Install `kubectl` on Jenkins Server. [Install and Set up kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/#install-kubectl)
 
@@ -2938,7 +2950,7 @@ kubectl version --short --client
 # Jenkins server terminaline Rancher instance'in connection bilgisini girecegiz.
 
 cd .ssh
-ssh -i "rancher.pem" ubuntu@ec2-3-239-227-112.compute-1.amazonaws.com
+ssh -i "rancher.pem" ubuntu@ec2-3-239-227-112.compute-1.amazonaws.com 
 
 ```bash
 # Set hostname of instance
@@ -2991,6 +3003,8 @@ Unhealthy threshold : 3
 Timeout             : 5 seconds
 Interval            : 10 seoconds
 Success             : 200
+
+Chose rancher-cluster-instance - Click Include as pending below - create taget grp
 ```
 
 * Create Application Load Balancer with name of `rancher-alb` using `rke-alb-sg` security group with following settings and add `rancher-http-80-tg` target group to it.
@@ -2998,20 +3012,25 @@ Success             : 200
 ```text
 Scheme              : internet-facing
 IP address type     : ipv4
+Subnet choose at least 2 one has to be same with your instance subnet.
+Sec Group: rke-alb-sg
 
-<!-- Listeners-->
+<!-- Listeners--> (Two listeners HTTPS and HTTP)
 Protocol            : HTTPS/HTTP
 Port                : 443/80
 Availability Zones  : Select AZs of RKE instances
 Target group        : `rancher-http-80-tg` target group 
+Chose Certificate: *.devopsyasin.com
 ```
 
-* Configure ALB --> Listener (edit) of HTTP on `Port 80` to redirect traffic to HTTPS on `Port 443`. (Sadece secure porttan talepler kabul edilsin) 
+* Configure ALB --> Listener (edit) of HTTP on `Port 80` to redirect traffic to HTTPS on `Port 443`. (Sadece secure porttan talepler kabul edilsin, HTTP den gelen requestleri HTTPS'e yonlendirecek) 
+# Load Balancer - Listeners - Chose HTTP:80 - Edit - Remove `Forward to` - Add Action - Redirect HTTPS:443 
+
 # Target grubu, load balancer'a register yapmak onemli, kontrol et!!!
 
 # Create DNS A record for `rancher.devopsyasin.com` and attach the `yasin-rancher-alb` application load balancer to it.
 # Route53 --> hosted zone --> devopsyasin.com --> create record--> simple routing--> Define simple record--> 
-# --> 'rancher'devopsyasin.com--> record type:A --> value:Alias the application loadbalacer--> region-->dual.simplerecord-->create-->create record
+# --> rancher devopsyasin.com--> record type:A --> value:Alias the application loadbalacer--> region-->dual simplerecord-->create-->create record
 
 * Install RKE, the Rancher Kubernetes Engine, [Kubernetes distribution and command-line tool](https://rancher.com/docs/rke/latest/en/installation/)) on Jenkins Server.
 - Come to jenkins server on terminal (by typing exit from rancher instance)
@@ -3044,7 +3063,7 @@ services:
   etcd:
     snapshot: true
     creation: 6h
-    retention: 24h
+    retention: 24h 
 
 ssh_key_path: ~/.ssh/rancher.pem
 
@@ -3060,7 +3079,7 @@ ingress:
 - Bu kisma gerek yok biz cunku Jenkinse her yone actik. 
 
 ```bash
-cd petclinic-microservices-with-db/infrastructure
+cd test-petclinic-microservices-with-db/infrastructure
 rke up --config ./rancher-cluster.yml
 ```
 
@@ -3073,7 +3092,7 @@ chmod 400 ~/.kube/config
 kubectl get nodes
 kubectl get pods --all-namespaces
 ```
-- Suana kadar EC2-rancher icersine kubernetes cluster kurduk. Bi sonraki adim da buna rancher uygulamasini deploy edecegiZ.
+# Suana kadar EC2-rancher icersine kubernetes cluster kurduk. Bi sonraki adim da buna rancher uygulamasini deploy edecegiZ.
 * Commit the change, then push the script to the remote repo.
 
 ``` bash
