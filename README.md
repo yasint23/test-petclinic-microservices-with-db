@@ -2787,8 +2787,8 @@ git checkout feature/msp-22
 
 * Explain [Rancher Container Management Tool](https://rancher.com/docs/rancher/v2.x/en/overview/architecture/).
 
-# Rancher da iki onemli nokata var; Secur baglanti ve High Availability. Rancher Server icin ec2 kuracagiz ve onune ALB ile high availibility saglayacagiz. Rancher da sec baglanti icin hhttps ile baglanabilecegiz bunun icin AWS TLS certificate ve Route-53 den domain ihtiyacimiz olacak. 
-# Rancher'in AWS servislerini kullanmasi icin IAM role tanimlayacagiz. Jenkins'e Ranger Kubernetes Engine (RKE CLI) tool indirerek Jenkins de bu tool ile once bir cluster kuracagiz sonra cluster'a Helm Chart yardimi ile Rancher uuygulamamiz install edecegiz. 
+# Rancher da iki onemli nokta var; Secur baglanti ve High Availability. Rancher Server icin ec2 kuracagiz ve onune ALB ile high availibility saglayacagiz. Rancher da sec baglanti icin hhttps ile baglanabilecegiz bunun icin AWS TLS certificate ve Route-53 den domain ihtiyacimiz olacak. 
+# Rancher'in AWS servislerini kullanmasi icin IAM role tanimlayacagiz. Jenkins'e, Rancher Kubernetes Engine (RKE CLI) tool indirerek Jenkins de bu tool ile once bir cluster kuracagiz sonra cluster'a Helm Chart yardimi ile Rancher uuygulamamiz install edecegiz. 
 # Staging environment jenkins job icerisinde, Rancher yardimi ile 3 node'dan olusan kubernetes cluster icersinde deploy edecegiz. Ayni sekilde production environmentda da yapacagiz.
 
 * Create an IAM Policy with name of `yasin-rke-controlplane-policy.json` and also save it under `infrastructure` for `Control Plane` node to enable Rancher to create or remove EC2 resources.
@@ -2915,22 +2915,23 @@ git checkout feature/msp-22
 
     * Allow TCP on port 2376 to any node IP from a node created using Node Driver for Docker machine TLS port.
 
-# Create sec grup diyoruz. Sonra tekrar bu sec grubunun hem inbound hemde outbound kismina kendisini(secgrp id) ekliyoruz, Cluster icerisinde kendi componentlerin (`controlplane`, `etcd`, `worker`) birbirleri ile iletisim kurabilmesi icin.
+# Create sec grup diyoruz. Sonra tekrar bu sec grubunun hem inbound hemde outbound kismina kendisini(sec grp id) ekliyoruz, Cluster icerisinde kendi componentlerin (`controlplane`, `etcd`, `worker`) birbirleri ile iletisim kurabilmesi icin.
 
   * Allow all protocol on all port from `rke-cluster-sg` for self communication between Rancher `controlplane`, `etcd`, `worker` nodes.
 # Edit inbound - Copy own sec grp id, paste to direction you will see rke-cluster-sg chose and save it. Do same thing to outbound rule
 
 * Log into Jenkins Server and create `rancher.pem` key-pair for Rancher Server using AWS CLI.
 # (Cluster'a jenkins server ile baglanacagimiz icin bu islemi yapiyoruz aksi halde gerek yoktu)
+# Asagidaki komut ile key olusturuyoruz.
   
 ```bash
-aws ec2 create-key-pair --region us-east-1 --key-name rancher.pem --query KeyMaterial --output text > ~/.ssh/rancher.pem
+aws ec2 create-key-pair --region us-east-1 --key-name rancher --query KeyMaterial --output text > ~/.ssh/rancher.pem 
 
 chmod 400 ~/.ssh/rancher.pem
 # Bu olmayabiliyor, terminalde .ssh folder icersine giderek orada chmod 400 rancher.pem yapmak daha kesin olur.
 ```
 
-* Launch an EC2 instance using `Ubuntu Server 20.04 LTS (HVM) (64-bit x86)` with `t3a.medium` type, 16 GB root volume,  `rke-cluster-sg` security group, `rke-role` IAM Role, `Name:Rancher-Cluster-Instance` tag and `rancher.pem` key-pair. Take note of `subnet id` of EC2. 
+* Launch an EC2 instance using `Ubuntu Server 20.04 LTS (HVM) (64-bit x86)` with `t3a.medium` type, 16 GB root volume,  `rke-cluster-sg` security group, `rke-role` IAM Role, `Name:Rancher-Cluster-Instance` tag and `rancher` key-pair. Take note of `subnet id` of EC2. 
 
 * Attach a tag to the `nodes (intances)`, `subnets` and `security group` for Rancher with `Key = kubernetes.io/cluster/Rancher` and `Value = owned`. 
 # Rancher Cluster Instance- Ad tag - `Key = kubernetes.io/cluster/Rancher` and `Value = owned` save
@@ -3034,6 +3035,7 @@ Chose Certificate: *.devopsyasin.com
 
 * Install RKE, the Rancher Kubernetes Engine, [Kubernetes distribution and command-line tool](https://rancher.com/docs/rke/latest/en/installation/)) on Jenkins Server.
 - Come to jenkins server on terminal (by typing exit from rancher instance)
+# Dikkat et jenkinsde .ssh icerisinde oluyor, home directorysinde calistir komutlari.
 ```bash
 curl -SsL "https://github.com/rancher/rke/releases/download/v1.3.7/rke_linux-amd64" -o "rke_linux-amd64"
 sudo mv rke_linux-amd64 /usr/local/bin/rke
@@ -3086,8 +3088,8 @@ rke up --config ./rancher-cluster.yml
 * Check if the RKE Kubernetes Cluster created successfully.
 
 ```bash
-mkdir -p ~/.kube
-mv ./kube_config_rancher-cluster.yml $HOME/.kube/config
+mkdir -p ~/.kube     # Biliyoruz ki K8s butun cluster listelerini /.kube altina listeliyor o nedenle bunu yapiyoruz
+mv ./kube_config_rancher-cluster.yml $HOME/.kube/config  # infrastructure alinda olusan cluster bilgilerini tasiyoruz
 chmod 400 ~/.kube/config
 kubectl get nodes
 kubectl get pods --all-namespaces
@@ -3293,8 +3295,8 @@ kompose convert -f docker-compose.yml -o petclinic_chart/templates
 
 * Update deployment files with `init-containers` to launch microservices in sequence. See [Init Containers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/).
 
-# Daha once uygulamamizi servisler (Config-server discovery-server Api-gateway customer ve visit) ile ayaga kaldiriyorduk, kubernetes de initcontainers ile yapacagiz. 
-# Copy to below 'resources: {}' in ...deployment.yml files and 'initContainers' must be same line (indentation) with 'containers..'
+# Daha once uygulamamizi servisler (Config-server discovery-server Api-gateway customer ve visit) ile ayaga kaldiriyorduk, kubernetes de init container lar ile yapacagiz. 
+# Copy the below commands in all ...deployment.yml files under the `resources: {}`  and 'initContainers' must be same line (indentation) with `containers..`
 ```yaml
 # for discovery server deployment files
       initContainers:
@@ -3307,13 +3309,14 @@ kompose convert -f docker-compose.yml -o petclinic_chart/templates
         image: busybox
         command: ['sh', '-c', 'until nc -z discovery-server:8761; do echo waiting for discovery-server; sleep 2; done;']
 ``` 
+
 * Update `spec.rules.host` field of `api-gateway-ingress.yaml` file as below.
 
 ```yaml
 '{{ .Values.DNS_NAME }}'
 ```
 
-* Add `k8s/petclinic_chart/values-template.yaml` file as below.
+* Create values-template.yaml under `k8s/petclinic_chart/values-template.yaml` file as below. 
 # Daha once jenkins server da tag ler olusturmustuk, imagelerin taglerini oradan alacak.
 
 ```yaml
@@ -3330,7 +3333,8 @@ IMAGE_TAG_PROMETHEUS_SERVICE: "${IMAGE_TAG_PROMETHEUS_SERVICE}"
 DNS_NAME: <"DNS Name of your application">                         #Enter your dns name not "rancher dns"
 ```
 
-* Check if the petclinic_chart working as expected. (Test etmek icin yapiyoruz)
+* Check if the petclinic_chart working as expected. (Test etmek icin yapiyoruz) 
+# Hepsini terminale kopyalayarak test ediyoruz.
 
 ```bash
 export IMAGE_TAG_CONFIG_SERVER="testing-image-1"    
@@ -3465,6 +3469,7 @@ AWS_REGION=us-east-1 helm upgrade --install petclinic-release stable-petclinicap
 ```
 
 * In Chart.yaml, set the `version` value to `HELM_VERSION` in Chart.yaml for automation in jenkins pipeline.
+# Chart.yaml da version: sayilari silip HELM_VERSION yazacagiz.
 
 * Commit the change, then push the script to the remote repo.
 
@@ -3484,12 +3489,13 @@ git push origin release
 # rancher şifremi unuttum:
 KUBECONFIG=~/.kube/config
 kubectl --kubeconfig $KUBECONFIG -n cattle-system exec $(kubectl --kubeconfig $KUBECONFIG -n cattle-system get pods -l app=rancher | grep '1/1' | head -1 | awk '{ print $1 }') -- reset-password
+## Sifre unutma islemi buraya kadar, asagisi rancher sayfasinda yaptgimiz islemler
 
 - Click 'local' --> Click 'Download Kubeconfig' (local cluster config dosyasi iniyor) Bu dosyanin icerigini terminalde .kube/config dosyasina rewrite yapistiralim. "overwrite onaylamak gerekiyor save icin"
 
-- "Terminalde 'kubectl get nodes' ile controlplane,etcd,worker gormemiz gerekiyor"
+# "Terminalde 'kubectl get nodes' ile controlplane,etcd,worker gormemiz gerekiyor"
 
-* To provide access of Rancher to the cloud resources, create a `Cloud Credentials` for AWS on Rancher and name it as `Yasin-AWS-Training-Account`.
+* To provide access of Rancher to the cloud resources, create a `Cloud Credentials` for AWS on Rancher and name it as `Yasin-AWS-Training-Account`. (On Rancher Page)
 * Rancher da AWS servisleri ile ilgili islem yapabilmek icin.
 - Rancher sayfasinda, Home(uc cizgi)--> Cluster management--> Cloud Credentials --> create--> aws --> any name and credentials. 
 
@@ -3527,6 +3533,8 @@ etcd              : checked
 Control Plane     : checked
 Worker            : checked
 ```
+- Create
+
 # it will take some time to get ready refresh the page to see the cluster.
 * Create `petclinic-staging-ns` namespace on `petclinic-cluster-staging` with Rancher.
 # Cluster--> Project/namespaces--> Create namespaces (on default)--> name:petclinic-staging-ns -->default--> create
